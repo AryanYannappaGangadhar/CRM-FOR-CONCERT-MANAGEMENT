@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% block title %}Select Seats - {{ event.event_name }}{% endblock %}
+{% block content %}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-chair me-2"></i>Seat Selection</h5>
+                    <div>
+                        <span class="badge bg-light text-dark">{{ event.event_name }}</span>
+                        <span class="badge bg-info ms-1">{{ event.event_date }} {{ event.event_time[:5] }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="seat-map-container">
+                    <div class="stage"><i class="fas fa-microphone-alt me-2"></i> STAGE <i class="fas fa-microphone-alt ms-2"></i></div>
+
+                    {% for row, seats in seat_map.items() %}
+                    <div class="seat-row">
+                        <span class="row-label">{{ row }}</span>
+                        {% for seat in seats %}
+                        <div class="seat {{ seat.seat_status|lower }} {{ seat.seat_class|lower }}"
+                             data-seat-id="{{ seat.seat_id }}"
+                             data-row="{{ seat.seat_row }}"
+                             data-num="{{ seat.seat_number }}"
+                             data-class="{{ seat.seat_class }}"
+                             title="Row {{ seat.seat_row }}, Seat {{ seat.seat_number }} ({{ seat.seat_class }})">
+                            {{ seat.seat_number }}
+                        </div>
+                        {% endfor %}
+                        <span class="row-label">{{ row }}</span>
+                    </div>
+                    {% endfor %}
+
+                    <div class="seat-legend">
+                        <div class="legend-item"><div class="seat available" style="width:24px;height:24px;margin:0;"></div> Available</div>
+                        <div class="legend-item"><div class="seat selected" style="width:24px;height:24px;margin:0;"></div> Selected</div>
+                        <div class="legend-item"><div class="seat booked" style="width:24px;height:24px;margin:0;"></div> Booked</div>
+                        <div class="legend-item"><div class="seat held" style="width:24px;height:24px;margin:0;"></div> Held</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="booking-summary">
+            <h5 class="summary-title"><i class="fas fa-list-check text-primary me-2"></i>Booking Summary</h5>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Ticket Type</label>
+                <select id="ticketTypeSelect" class="form-select">
+                    {% for tt in ticket_types %}
+                    <option value="{{ tt.ticket_type_id }}" data-price="{{ tt.price }}">{{ tt.type_name }} - Rs. {{ '%.0f'|format(tt.price) }} ({{ tt.available_quantity }} left)</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="bg-white rounded p-3 mb-3 border">
+                <div class="fw-bold mb-2"><i class="fas fa-chair text-primary me-2"></i>Selected Seats</div>
+                <div id="selectedSeatsDisplay" class="text-muted small mb-2">No seats selected</div>
+                <div class="summary-row">
+                    <span>Seats Count:</span>
+                    <span id="seatsCount">0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Price per Ticket:</span>
+                    <span id="unitPrice">Rs. 0</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total Amount:</span>
+                    <span id="totalAmount">Rs. 0</span>
+                </div>
+            </div>
+
+            <div class="alert alert-warning small mb-3">
+                <i class="fas fa-clock me-1"></i>
+                Selected seats will be held for <strong>10 minutes</strong> once you proceed.
+            </div>
+
+            <form id="bookingForm" method="POST" action="{{ url_for('confirm_booking') }}">
+                <input type="hidden" name="event_id" value="{{ event.event_id }}">
+                <input type="hidden" name="seat_ids" id="seatIdsInput">
+                <input type="hidden" name="ticket_type_id" id="ticketTypeIdInput" value="{{ ticket_types[0].ticket_type_id if ticket_types else '' }}">
+                <button type="submit" id="proceedBtn" class="btn btn-primary btn-lg w-100" disabled>
+                    <i class="fas fa-arrow-right me-2"></i> Proceed to Checkout
+                </button>
+            </form>
+
+            <hr class="my-3">
+            <a href="{{ url_for('event_detail', event_id=event.event_id) }}" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-arrow-left me-1"></i> Back to Event
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const MAX_SEATS = 10;
+let selectedSeats = new Map();
+
+function updateSummary() {
+    const ttSelect = document.getElementById('ticketTypeSelect');
+    const unitPrice = parseFloat(ttSelect.options[ttSelect.selectedIndex].dataset.price);
+    const ttId = ttSelect.value;
+
+    document.getElementById('ticketTypeIdInput').value = ttId;
+    document.getElementById('unitPrice').textContent = 'Rs. ' + unitPrice.toFixed(0);
+
+    const count = selectedSeats.size;
+    const total = count * unitPrice;
+
+    document.getElementById('seatsCount').textContent = count;
+    document.getElementById('totalAmount').textContent = 'Rs. ' + total.toFixed(0);
+
+    const ids = Array.from(selectedSeats.keys()).join(',');
+    document.getElementById('seatIdsInput').value = ids;
+
+    const display = count > 0
+        ? Array.from(selectedSeats.values()).map(s => `${s.row}-${s.num} (${s.class})`).join(', ')
+        : 'No seats selected';
+    document.getElementById('selectedSeatsDisplay').textContent = display;
+
+    document.getElementById('proceedBtn').disabled = count === 0;
+}
+
+document.querySelectorAll('.seat.available, .seat.vip, .seat.premium').forEach(seat => {
+    seat.addEventListener('click', () => {
+        const sid = seat.dataset.seatId;
+        if (seat.classList.contains('booked') || seat.classList.contains('held')) return;
+        if (seat.classList.contains('selected')) {
+            seat.classList.remove('selected');
+            selectedSeats.delete(sid);
+        } else {
+            if (selectedSeats.size >= MAX_SEATS) {
+                alert('Maximum ' + MAX_SEATS + ' seats allowed per booking.');
+                return;
+            }
+            seat.classList.add('selected');
+            selectedSeats.set(sid, {
+                row: seat.dataset.row, num: seat.dataset.num, class: seat.dataset.class
+            });
+        }
+        updateSummary();
+    });
+});
+
+document.getElementById('ticketTypeSelect').addEventListener('change', updateSummary);
+updateSummary();
+</script>
+{% endblock %}

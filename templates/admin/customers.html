@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Manage Customers{% endblock %}
+{% block content %}
+
+<h2 class="mb-4 fw-bold"><i class="fas fa-users text-primary me-2"></i>Customer Management</h2>
+
+{% if customers %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Bookings</th><th>Joined</th></tr>
+                </thead>
+                <tbody>
+                    {% for c in customers %}
+                    <tr>
+                        <td><strong>{{ c.customer_id }}</strong></td>
+                        <td><strong>{{ c.full_name }}</strong></td>
+                        <td>{{ c.email }}</td>
+                        <td>{{ c.phone or 'N/A' }}</td>
+                        <td><span class="status-badge status-{% if c.user_role == 'Admin' %}Confirmed{% else %}Pending{% endif %}">{{ c.user_role }}</span></td>
+                        <td class="text-center"><span class="badge bg-primary">{{ c.booking_count }}</span></td>
+                        <td class="small text-muted">{{ c.created_at[:10] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="empty-state card">
+    <div class="empty-icon"><i class="fas fa-users"></i></div>
+    <h4>No customers yet</h4>
+    <p>Customers will appear here once they register or make bookings.</p>
+</div>
+{% endif %}
+
+{% endblock %}

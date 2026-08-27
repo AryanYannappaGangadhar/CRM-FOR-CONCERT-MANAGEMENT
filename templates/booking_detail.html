@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block title %}Booking {{ booking.booking_ref }} - EventBook Pro{% endblock %}
+{% block content %}
+
+<div class="mb-4 d-print-none">
+    <a href="{{ url_for('my_bookings') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Bookings
+    </a>
+    <button class="btn btn-outline-primary ms-2" onclick="window.print()">
+        <i class="fas fa-print me-1"></i> Print E-Ticket
+    </button>
+</div>
+
+<div class="ticket-container mb-4">
+    <div class="ticket-header d-flex justify-content-between align-items-start">
+        <div>
+            <div class="text-muted small mb-1">BOOKING CONFIRMED</div>
+            <h2 class="mb-1 fw-bold" style="color: var(--primary-dark);">{{ booking.event_name }}</h2>
+            <div class="text-muted"><i class="fas fa-calendar me-1"></i>{{ booking.event_date }} at {{ booking.event_time[:5] }}</div>
+            <div class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>{{ booking.venue_name }}</div>
+        </div>
+        <div class="text-end">
+            <div class="ticket-qr mx-auto mb-2"></div>
+            <div class="small text-muted fw-bold">Booking Ref</div>
+            <div class="fw-bold text-primary" style="font-size:1.2rem;">{{ booking.booking_ref }}</div>
+        </div>
+    </div>
+
+    <div class="row g-3 py-3">
+        <div class="col-md-4">
+            <div class="bg-white rounded p-3 border">
+                <small class="text-muted d-block mb-1"><i class="fas fa-user me-1"></i>Booked By</small>
+                <strong>{{ booking.full_name }}</strong><br>
+                <small class="text-muted">{{ booking.email }}</small><br>
+                <small class="text-muted">{{ booking.phone }}</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="bg-white rounded p-3 border">
+                <small class="text-muted d-block mb-1"><i class="fas fa-chair me-1"></i>Seats ({{ booking.total_seats }})</small>
+                {% for s in seats %}
+                <span class="badge bg-primary me-1 mb-1">{{ s.seat_row }}-{{ s.seat_number }} ({{ s.seat_class }})</span>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="bg-white rounded p-3 border">
+                <small class="text-muted d-block mb-1"><i class="fas fa-rupee-sign me-1"></i>Total Amount</small>
+                <div class="fs-3 fw-bold" style="color: var(--primary-dark);">Rs. {{ '%.2f'|format(booking.total_amount) }}</div>
+                <span class="status-badge status-{{ booking.booking_status }}">{{ booking.booking_status }}</span>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-3">
+    <div class="row small">
+        <div class="col-md-6">
+            <div class="fw-bold mb-1"><i class="fas fa-info-circle me-1"></i>Venue Address</div>
+            <div class="text-muted">{{ booking.address }}</div>
+        </div>
+        <div class="col-md-6">
+            <div class="fw-bold mb-1"><i class="fas fa-info-circle me-1"></i>Important Instructions</div>
+            <ul class="mb-0 text-muted ps-3">
+                <li>Please carry a printout or digital copy of this ticket</li>
+                <li>Carry a valid photo ID for verification</li>
+                <li>Arrive at least 30 minutes before the event</li>
+                <li>No refund on cancellation within 24 hours of event</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% if payment %}
+<div class="card mb-4 no-print">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Details</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3"><strong>Transaction ID:</strong><br><span class="text-muted">{{ payment.transaction_id }}</span></div>
+            <div class="col-md-3"><strong>Method:</strong><br><span class="text-muted">{{ payment.payment_method }}</span></div>
+            <div class="col-md-3"><strong>Amount:</strong><br><span class="fw-bold">Rs. {{ '%.2f'|format(payment.amount) }}</span></div>
+            <div class="col-md-3"><strong>Status:</strong><br><span class="status-badge status-{{ payment.payment_status }}">{{ payment.payment_status }}</span></div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if refund %}
+<div class="card mb-4 border-warning no-print">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="fas fa-undo me-2"></i>Refund Details</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3"><strong>Refund Reference:</strong><br><span class="text-muted">{{ refund.refund_ref }}</span></div>
+            <div class="col-md-3"><strong>Refund Amount:</strong><br><span class="fw-bold text-success">Rs. {{ '%.2f'|format(refund.refund_amount) }}</span></div>
+            <div class="col-md-3"><strong>Status:</strong><br><span class="status-badge status-{{ refund.refund_status }}">{{ refund.refund_status }}</span></div>
+            <div class="col-md-3"><strong>Reason:</strong><br><small class="text-muted">{{ refund.refund_reason }}</small></div>
+        </div>
+        {% if user and user.user_role == 'Admin' and refund.refund_status in ['Initiated', 'Processing'] %}
+        <hr>
+        <form method="POST" action="{{ url_for('process_refund', refund_id=refund.refund_id) }}" class="d-inline">
+            <button class="btn btn-success"><i class="fas fa-check me-1"></i> Mark Refund as Completed</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if refund_estimate and booking.booking_status == 'Confirmed' and not refund %}
+<div class="card border-danger mb-4 no-print">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Cancel Booking</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-8">
+                <h6 class="fw-bold">Refund Policy Applied:</h6>
+                <p class="mb-0 text-muted">{{ refund_estimate.policy }}</p>
+                <p class="mb-0 mt-2"><strong>Estimated Refund Amount:</strong>
+                    <span class="fw-bold text-success fs-5">Rs. {{ '%.2f'|format(refund_estimate.amount) }}</span>
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                    <i class="fas fa-times-circle me-1"></i> Cancel Booking
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Cancellation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to cancel this booking?</p>
+                <hr>
+                <p><strong>Refund Amount: Rs. {{ '%.2f'|format(refund_estimate.amount) }}</strong></p>
+                <p class="small text-muted mb-0">{{ refund_estimate.policy }}</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Booking</button>
+                <form method="POST" action="{{ url_for('cancel_booking', booking_id=booking.booking_id) }}">
+                    <button class="btn btn-danger"><i class="fas fa-check me-1"></i> Yes, Cancel It</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

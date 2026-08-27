@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Manage Venues{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0 fw-bold"><i class="fas fa-map-marker-alt text-primary me-2"></i>Manage Venues</h2>
+    <a href="{{ url_for('create_venue') }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus me-1"></i> Create New Venue
+    </a>
+</div>
+
+{% if venues %}
+<div class="row g-4">
+    {% for v in venues %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="fw-bold mb-0"><i class="fas fa-building text-primary me-2"></i>{{ v.venue_name }}</h5>
+                    <span class="badge bg-primary fs-6">{{ v.total_capacity }} seats</span>
+                </div>
+                <p class="mb-2 text-muted small"><i class="fas fa-map me-2"></i>{{ v.address }}</p>
+                {% if v.amenities %}
+                <p class="mb-3 small text-muted"><i class="fas fa-star me-2 text-warning"></i>{{ v.amenities }}</p>
+                {% endif %}
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">{{ v.event_count }} event(s)</small>
+                    <div>
+                        <a href="{{ url_for('edit_venue', venue_id=v.venue_id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('delete_venue', venue_id=v.venue_id) }}" class="d-inline" onsubmit="return confirm('Delete this venue?');">
+                            <button class="btn btn-sm btn-outline-danger" {% if v.event_count > 0 %}disabled title="Venue has active events"{% endif %}>
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state card">
+    <div class="empty-icon"><i class="fas fa-building"></i></div>
+    <h4>No venues yet</h4>
+    <p>Create your first venue to start scheduling events.</p>
+    <a href="{{ url_for('create_venue') }}" class="btn btn-primary mt-3"><i class="fas fa-plus me-1"></i> Create Venue</a>
+</div>
+{% endif %}
+
+{% endblock %}

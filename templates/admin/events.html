@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Manage Events{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0 fw-bold"><i class="fas fa-calendar-alt text-primary me-2"></i>Manage Events</h2>
+    <a href="{{ url_for('create_event') }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus me-1"></i> Create New Event
+    </a>
+</div>
+
+{% if events %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr><th>#</th><th>Event</th><th>Category</th><th>Date & Time</th><th>Venue</th><th>Status</th><th>Bookings</th><th class="text-end no-print">Actions</th></tr>
+                </thead>
+                <tbody>
+                    {% for e in events %}
+                    <tr>
+                        <td><strong>{{ e.event_id }}</strong></td>
+                        <td><strong>{{ e.event_name }}</strong><br><small class="text-muted">{{ e.description[:50] }}...</small></td>
+                        <td><span class="badge bg-info">{{ e.category }}</span></td>
+                        <td>{{ e.event_date }}<br><small class="text-muted">{{ e.event_time[:5] }}</small></td>
+                        <td>{{ e.venue_name }}</td>
+                        <td><span class="status-badge status-{% if e.event_status == 'Published' %}Confirmed{% elif e.event_status == 'Cancelled' %}Cancelled{% elif e.event_status == 'Sold Out' %}Pending{% else %}Processing{% endif %}">{{ e.event_status }}</span></td>
+                        <td class="text-center"><span class="badge bg-primary">{{ e.bookings_count }}</span></td>
+                        <td class="text-end no-print" style="white-space:nowrap;">
+                            <a href="{{ url_for('event_detail', event_id=e.event_id) }}" class="btn btn-sm btn-outline-info" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('edit_event', event_id=e.event_id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
+                            <a href="{{ url_for('edit_ticket_types', event_id=e.event_id) }}" class="btn btn-sm btn-outline-warning" title="Tickets"><i class="fas fa-ticket-alt"></i></a>
+                            <form method="POST" action="{{ url_for('delete_event', event_id=e.event_id) }}" class="d-inline" onsubmit="return confirm('Delete this event?');">
+                                <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="empty-state card">
+    <div class="empty-icon"><i class="fas fa-calendar"></i></div>
+    <h4>No events yet</h4>
+    <p>Create your first event to start selling tickets.</p>
+    <a href="{{ url_for('create_event') }}" class="btn btn-primary mt-3"><i class="fas fa-plus me-1"></i> Create Event</a>
+</div>
+{% endif %}
+
+{% endblock %}

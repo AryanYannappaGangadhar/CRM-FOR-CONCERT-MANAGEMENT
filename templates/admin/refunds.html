@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Refund Management{% endblock %}
+{% block content %}
+
+<h2 class="mb-4 fw-bold"><i class="fas fa-undo text-primary me-2"></i>Refund Management</h2>
+
+{% if refunds %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr><th>Refund Ref</th><th>Booking</th><th>Event</th><th>Customer</th><th>Amount</th><th>Reason / Policy</th><th>Requested</th><th>Status</th><th class="no-print">Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for r in refunds %}
+                    <tr>
+                        <td><strong class="text-primary">{{ r.refund_ref }}</strong></td>
+                        <td>{{ r.booking_ref }}</td>
+                        <td>{{ r.event_name }}</td>
+                        <td>{{ r.full_name }}<br><small class="text-muted">{{ r.email }}</small></td>
+                        <td class="fw-bold text-success">Rs. {{ '%.2f'|format(r.refund_amount) }}</td>
+                        <td><small class="text-muted">{{ r.refund_reason }}</small></td>
+                        <td class="small">{{ r.requested_at[:16] }}</td>
+                        <td><span class="status-badge status-{{ r.refund_status }}">{{ r.refund_status }}</span></td>
+                        <td class="no-print">
+                            {% if r.refund_status in ['Initiated', 'Processing'] %}
+                            <form method="POST" action="{{ url_for('process_refund', refund_id=r.refund_id) }}" class="d-inline">
+                                <button class="btn btn-sm btn-success" title="Process Refund">
+                                    <i class="fas fa-check me-1"></i> Process
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted small">Done</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="empty-state card">
+    <div class="empty-icon"><i class="fas fa-undo"></i></div>
+    <h4>No refund requests</h4>
+    <p>Refund requests from cancelled bookings will appear here.</p>
+</div>
+{% endif %}
+
+{% endblock %}

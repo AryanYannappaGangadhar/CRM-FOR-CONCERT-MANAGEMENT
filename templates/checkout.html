@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}Checkout - Booking {{ booking.booking_ref }}{% endblock %}
+{% block content %}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Payment Details</h5>
+            </div>
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3">Select Payment Method</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4 col-6">
+                        <div class="payment-method selected" data-method="Credit Card">
+                            <div class="payment-method-icon"><i class="fas fa-credit-card"></i></div>
+                            <div class="fw-bold small">Credit Card</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <div class="payment-method" data-method="Debit Card">
+                            <div class="payment-method-icon"><i class="fas fa-credit-card" style="color:#10b981"></i></div>
+                            <div class="fw-bold small">Debit Card</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <div class="payment-method" data-method="UPI">
+                            <div class="payment-method-icon"><i class="fas fa-mobile-alt" style="color:#f59e0b"></i></div>
+                            <div class="fw-bold small">UPI</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <div class="payment-method" data-method="Net Banking">
+                            <div class="payment-method-icon"><i class="fas fa-university" style="color:#8b5cf6"></i></div>
+                            <div class="fw-bold small">Net Banking</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <div class="payment-method" data-method="Wallet">
+                            <div class="payment-method-icon"><i class="fas fa-wallet" style="color:#ec4899"></i></div>
+                            <div class="fw-bold small">Wallet</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cardForm">
+                    <div class="row g-3">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Card Holder Name</label>
+                            <input type="text" class="form-control" placeholder="JOHN DOE" value="TEST USER">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Card Number</label>
+                            <input type="text" class="form-control" placeholder="4242 4242 4242 4242" maxlength="19" value="4242 4242 4242 4242">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Expiry Date</label>
+                            <input type="text" class="form-control" placeholder="MM/YY" value="12/28">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CVV</label>
+                            <input type="password" class="form-control" placeholder="***" maxlength="4" value="123">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-light rounded p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center small">
+                        <span class="text-muted"><i class="fas fa-shield-alt me-1 text-success"></i> 100% Secure Payment - SSL Encrypted</span>
+                        <img src="" alt="Secure" onerror="this.style.display='none'">
+                    </div>
+                </div>
+
+                <div id="timerBox" class="alert alert-warning text-center mb-3">
+                    <i class="fas fa-clock me-2"></i>
+                    <span class="fw-bold">Time remaining to complete payment: <span id="countdown" class="text-danger">10:00</span></span>
+                </div>
+
+                <button id="payBtn" class="btn btn-success btn-lg w-100">
+                    <i class="fas fa-lock me-2"></i> Pay Rs. {{ '%.2f'|format(booking.total_amount) }} Securely
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Selected Seats</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th><th>Seat</th><th>Class</th><th>Ticket Type</th><th class="text-end">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in seats %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><strong>Row {{ s.seat_row }}, Seat {{ s.seat_number }}</strong></td>
+                                <td><span class="status-badge status-Confirmed">{{ s.seat_class }}</span></td>
+                                <td>{{ s.type_name }}</td>
+                                <td class="text-end fw-bold">Rs. {{ '%.2f'|format(s.unit_price) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="booking-summary">
+            <h5 class="summary-title"><i class="fas fa-info-circle text-primary me-2"></i>Order Summary</h5>
+            <div class="mb-3">
+                <h6 class="fw-bold mb-1">{{ booking.event_name }}</h6>
+                <div class="small text-muted mb-1"><i class="fas fa-calendar me-1"></i>{{ booking.event_date }} at {{ booking.event_time[:5] }}</div>
+                <div class="small text-muted"><i class="fas fa-map-marker-alt me-1"></i>{{ booking.venue_name }}</div>
+            </div>
+            <hr>
+            <div class="summary-row"><span>Booking Reference:</span><span class="fw-bold">{{ booking.booking_ref }}</span></div>
+            <div class="summary-row"><span>No. of Seats:</span><span>{{ booking.total_seats }}</span></div>
+            <div class="summary-row"><span>Subtotal:</span><span>Rs. {{ '%.2f'|format(booking.total_amount) }}</span></div>
+            <div class="summary-row"><span>Convenience Fee:</span><span>Rs. 0.00</span></div>
+            <div class="summary-row total"><span>Total Payable:</span><span>Rs. {{ '%.2f'|format(booking.total_amount) }}</span></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedMethod = 'Credit Card';
+document.querySelectorAll('.payment-method').forEach(m => {
+    m.addEventListener('click', () => {
+        document.querySelectorAll('.payment-method').forEach(x => x.classList.remove('selected'));
+        m.classList.add('selected');
+        selectedMethod = m.dataset.method;
+        document.getElementById('cardForm').style.display = (selectedMethod === 'Credit Card' || selectedMethod === 'Debit Card') ? 'block' : 'none';
+    });
+});
+
+let seconds = 600;
+const interval = setInterval(() => {
+    seconds--;
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    const el = document.getElementById('countdown');
+    if (el) el.textContent = `${m}:${s}`;
+    if (seconds <= 0) {
+        clearInterval(interval);
+        alert('Time expired! Seats have been released. Please try again.');
+        window.location.href = "{{ url_for('seat_selection', event_id=booking.event_id) }}";
+    }
+}, 1000);
+
+document.getElementById('payBtn').addEventListener('click', function() {
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing Payment...';
+    const fd = new FormData();
+    fd.append('payment_method', selectedMethod);
+    fetch("{{ url_for('process_payment', booking_id=booking.booking_id) }}", {
+        method: 'POST', body: fd
+    }).then(r => r.json()).then(data => {
+        alert(data.message);
+        if (data.success) window.location.href = data.redirect;
+        else { this.disabled = false; this.innerHTML = '<i class="fas fa-redo me-2"></i> Try Again'; }
+    });
+});
+</script>
+{% endblock %}

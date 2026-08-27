@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}EventBook Pro - Find & Book Event Tickets Online{% endblock %}
+{% block content %}
+
+<div class="hero-section mb-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="hero-title">Book Your Experience Today!</h1>
+                <p class="hero-subtitle">Discover amazing events near you. From concerts to conferences, sports to theater - seamless booking, instant e-tickets.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="search-box">
+    <form method="GET" action="{{ url_for('home') }}" class="row g-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 rounded-start-pill"><i class="fas fa-search text-primary"></i></span>
+                <input type="text" class="form-control border-start-0 rounded-end-pill" name="search" placeholder="Search events, artists, venues..." value="{{ search }}">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select name="category" class="form-select rounded-pill">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {% if selected_cat == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100 rounded-pill btn-lg">
+                <i class="fas fa-search me-1"></i> Search
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="category-chips">
+    <a href="{{ url_for('home', search=search) }}" class="chip {% if not selected_cat %}active{% endif %}"><i class="fas fa-th-large me-1"></i> All</a>
+    {% for cat in categories %}
+    <a href="{{ url_for('home', category=cat, search=search) }}" class="chip {% if selected_cat == cat %}active{% endif %}">{{ cat }}</a>
+    {% endfor %}
+</div>
+
+<h2 class="mb-4">
+    <i class="fas fa-fire text-danger me-2"></i>
+    {% if selected_cat %}{{ selected_cat }} Events{% elif search %}Results for "{{ search }}"{% else %}Upcoming Events{% endif %}
+    <small class="text-muted fs-6">({{ events|length }} found)</small>
+</h2>
+
+{% if events %}
+<div class="row g-4">
+    {% for ev in events %}
+    <div class="col-lg-4 col-md-6">
+        <div class="card event-card h-100">
+            <div class="event-image">
+                {% if ev.category == 'Concert' %}<i class="fas fa-guitar"></i>
+                {% elif ev.category == 'Conference' %}<i class="fas fa-users"></i>
+                {% elif ev.category == 'Sports' %}<i class="fas fa-trophy"></i>
+                {% elif ev.category == 'Theater' %}<i class="fas fa-theater-masks"></i>
+                {% elif ev.category == 'Workshop' %}<i class="fas fa-laptop-code"></i>
+                {% else %}<i class="fas fa-calendar-star"></i>
+                {% endif %}
+                <span class="event-badge badge-category">{{ ev.category }}</span>
+            </div>
+            <div class="event-content">
+                <h3 class="event-title">{{ ev.event_name }}</h3>
+                <div class="event-info"><i class="fas fa-calendar"></i> {{ ev.event_date }} at {{ ev.event_time[:5] }}</div>
+                <div class="event-info"><i class="fas fa-map-marker-alt"></i> {{ ev.venue_name }}</div>
+                <div class="event-info"><i class="fas fa-map"></i> {{ ev.address[:50] }}</div>
+                <div class="event-footer">
+                    <div>
+                        <div class="price-tag">Rs. {{ '%0.0f' % (ev.event_id * 500 + 499) }}+<small> from</small></div>
+                    </div>
+                    <a href="{{ url_for('event_detail', event_id=ev.event_id) }}" class="btn btn-primary btn-sm">
+                        Book Now <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon"><i class="fas fa-calendar-times"></i></div>
+    <h4>No events found</h4>
+    <p>Try adjusting your search or filters to find events.</p>
+    <a href="{{ url_for('home') }}" class="btn btn-primary mt-3">View All Events</a>
+</div>
+{% endif %}
+
+{% endblock %}
